@@ -13,6 +13,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>DataLoader</module>
+        <module>StatisticsRecommender</module>
+        <module>OfflineRecommender</module>
     </modules>
 
     <dependencyManagement>

@@ -1,9 +1,17 @@
 package com.atguigu.recommender
 
+import java.net.InetAddress
+
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
+import org.elasticsearch.common.settings.Settings
+import org.elasticsearch.common.transport.InetSocketTransportAddress
+import org.elasticsearch.transport.client.PreBuiltTransportClient
 
 /**
   * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
@@ -126,10 +134,25 @@ object DataLoader {
     // 将数据保存到MongoDB
     storeDataInMongoDB(movieDF, ratingDF, tagDF)
 
-    // 数据预处理
+    // 数据预处理，把movie对应的tag信息添加进去，加一列 tag1|tag2|tag3...
+    import org.apache.spark.sql.functions._
+
+    /**
+      * mid, tags
+      *
+      * tags: tag1|tag2|tag3...
+      */
+    val newTag = tagDF.groupBy($"mid")
+      .agg( concat_ws( "|", collect_set($"tag") ).as("tags") )
+      .select("mid", "tags")
+
+    // newTag和movie做join，数据合并在一起，左外连接
+    val movieWithTagsDF = movieDF.join(newTag, Seq("mid"), "left")
+
+    implicit val esConfig = ESConfig(config("es.httpHosts"), config("es.transportHosts"), config("es.index"), config("es.cluster.name"))
 
     // 保存数据到ES
-    storeDataInES()
+    storeDataInES(movieWithTagsDF)
 
     spark.stop()
   }
@@ -176,8 +199,37 @@ object DataLoader {
 
   }
 
-  def storeDataInES(): Unit ={
+  def storeDataInES(movieDF: DataFrame)(implicit eSConfig: ESConfig): Unit ={
+    // 新建es配置
+    val settings: Settings = Settings.builder().put("cluster.name", eSConfig.clustername).build()
 
+    // 新建一个es客户端
+    val esClient = new PreBuiltTransportClient(settings)
+
+    val REGEX_HOST_PORT = "(.+):(\\d+)".r
+    eSConfig.transportHosts.split(",").foreach{
+      case REGEX_HOST_PORT(host: String, port: String) => {
+        esClient.addTransportAddress(new InetSocketTransportAddress( InetAddress.getByName(host), port.toInt ))
+      }
+    }
+
+    // 先清理遗留的数据
+    if( esClient.admin().indices().exists( new IndicesExistsRequest(eSConfig.index) )
+        .actionGet()
+        .isExists
+    ){
+      esClient.admin().indices().delete( new DeleteIndexRequest(eSConfig.index) )
+    }
+
+    esClient.admin().indices().create( new CreateIndexRequest(eSConfig.index) )
+
+    movieDF.write
+      .option("es.nodes", eSConfig.httpHosts)
+      .option("es.http.timeout", "100m")
+      .option("es.mapping.id", "mid")
+      .mode("overwrite")
+      .format("org.elasticsearch.spark.sql")
+      .save(eSConfig.index + "/" + ES_MOVIE_INDEX)
   }
 
 }
