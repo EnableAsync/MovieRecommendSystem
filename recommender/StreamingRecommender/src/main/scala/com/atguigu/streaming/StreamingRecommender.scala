@@ -200,7 +200,7 @@ object StreamingRecommender {
       // groupBy之后得到的数据 Map( mid -> ArrayBuffer[(mid, score)] )
       case (mid, scoreList) =>
         ( mid, scoreList.map(_._2).sum / scoreList.length + log(increMap.getOrDefault(mid, 1)) - log(decreMap.getOrDefault(mid, 1)) )
-    }.toArray
+    }.toArray.sortWith(_._2>_._2)
   }
 
   // 获取两个电影之间的相似度
