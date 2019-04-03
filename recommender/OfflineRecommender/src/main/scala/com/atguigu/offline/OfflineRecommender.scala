@@ -74,7 +74,7 @@ object OfflineRecommender {
     // 训练隐语义模型
     val trainData = ratingRDD.map( x => Rating(x._1, x._2, x._3) )
 
-    val (rank, iterations, lambda) = (50, 5, 0.01)
+    val (rank, iterations, lambda) = (200, 5, 0.1)
     val model = ALS.train(trainData, rank, iterations, lambda)
 
     // 基于用户和电影的隐特征，计算预测评分，得到用户的推荐列表
