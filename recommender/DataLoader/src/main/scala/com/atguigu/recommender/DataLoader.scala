@@ -46,7 +46,7 @@ case class Movie(mid: Int, name: String, descri: String, timelong: String, issue
   *
   * 1,31,2.5,1260759144
   */
-case class Rating(uid: Int, mid: Int, score: Double, timestamp: Int )
+case class Rating(uid: Int, mid: Int, score: Double, timestamp: Int)
 
 /**
   * Tag数据集
@@ -62,23 +62,23 @@ case class Tag(uid: Int, mid: Int, tag: String, timestamp: Int)
   * @param uri MongoDB连接
   * @param db  MongoDB数据库
   */
-case class MongoConfig(uri:String, db:String)
+case class MongoConfig(uri: String, db: String)
 
 /**
   *
-  * @param httpHosts       http主机列表，逗号分隔
-  * @param transportHosts  transport主机列表
-  * @param index            需要操作的索引
-  * @param clustername      集群名称，默认elasticsearch
+  * @param httpHosts      http主机列表，逗号分隔
+  * @param transportHosts transport主机列表
+  * @param index          需要操作的索引
+  * @param clustername    集群名称，默认elasticsearch
   */
-case class ESConfig(httpHosts:String, transportHosts:String, index:String, clustername:String)
+case class ESConfig(httpHosts: String, transportHosts: String, index: String, clustername: String)
 
 object DataLoader {
 
   // 定义常量
-  val MOVIE_DATA_PATH = "D:\\Projects\\BigData\\MovieRecommendSystem\\recommender\\DataLoader\\src\\main\\resources\\movies.csv"
-  val RATING_DATA_PATH = "D:\\Projects\\BigData\\MovieRecommendSystem\\recommender\\DataLoader\\src\\main\\resources\\ratings.csv"
-  val TAG_DATA_PATH = "D:\\Projects\\BigData\\MovieRecommendSystem\\recommender\\DataLoader\\src\\main\\resources\\tags.csv"
+  val MOVIE_DATA_PATH = "/home/rai/Documents/learn/MovieRecommendSystem/recommender/DataLoader/src/main/resources/movies.csv"
+  val RATING_DATA_PATH = "/home/rai/Documents/learn/MovieRecommendSystem/recommender/DataLoader/src/main/resources/ratings.csv"
+  val TAG_DATA_PATH = "/home/rai/Documents/learn/MovieRecommendSystem/recommender/DataLoader/src/main/resources/tags.csv"
 
   val MONGODB_MOVIE_COLLECTION = "Movie"
   val MONGODB_RATING_COLLECTION = "Rating"
@@ -119,14 +119,14 @@ object DataLoader {
 
     val ratingDF = ratingRDD.map(item => {
       val attr = item.split(",")
-      Rating(attr(0).toInt,attr(1).toInt,attr(2).toDouble,attr(3).toInt)
+      Rating(attr(0).toInt, attr(1).toInt, attr(2).toDouble, attr(3).toInt)
     }).toDF()
 
     val tagRDD = spark.sparkContext.textFile(TAG_DATA_PATH)
     //将tagRDD装换为DataFrame
     val tagDF = tagRDD.map(item => {
       val attr = item.split(",")
-      Tag(attr(0).toInt,attr(1).toInt,attr(2).trim,attr(3).toInt)
+      Tag(attr(0).toInt, attr(1).toInt, attr(2).trim, attr(3).toInt)
     }).toDF()
 
     implicit val mongoConfig = MongoConfig(config("mongo.uri"), config("mongo.db"))
@@ -143,7 +143,7 @@ object DataLoader {
       * tags: tag1|tag2|tag3...
       */
     val newTag = tagDF.groupBy($"mid")
-      .agg( concat_ws( "|", collect_set($"tag") ).as("tags") )
+      .agg(concat_ws("|", collect_set($"tag")).as("tags"))
       .select("mid", "tags")
 
     // newTag和movie做join，数据合并在一起，左外连接
@@ -157,7 +157,7 @@ object DataLoader {
     spark.stop()
   }
 
-  def storeDataInMongoDB(movieDF: DataFrame, ratingDF: DataFrame, tagDF: DataFrame)(implicit mongoConfig: MongoConfig): Unit ={
+  def storeDataInMongoDB(movieDF: DataFrame, ratingDF: DataFrame, tagDF: DataFrame)(implicit mongoConfig: MongoConfig): Unit = {
     // 新建一个mongodb的连接
     val mongoClient = MongoClient(MongoClientURI(mongoConfig.uri))
 
@@ -199,7 +199,7 @@ object DataLoader {
 
   }
 
-  def storeDataInES(movieDF: DataFrame)(implicit eSConfig: ESConfig): Unit ={
+  def storeDataInES(movieDF: DataFrame)(implicit eSConfig: ESConfig): Unit = {
     // 新建es配置
     val settings: Settings = Settings.builder().put("cluster.name", eSConfig.clustername).build()
 
@@ -207,21 +207,21 @@ object DataLoader {
     val esClient = new PreBuiltTransportClient(settings)
 
     val REGEX_HOST_PORT = "(.+):(\\d+)".r
-    eSConfig.transportHosts.split(",").foreach{
+    eSConfig.transportHosts.split(",").foreach {
       case REGEX_HOST_PORT(host: String, port: String) => {
-        esClient.addTransportAddress(new InetSocketTransportAddress( InetAddress.getByName(host), port.toInt ))
+        esClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port.toInt))
       }
     }
 
     // 先清理遗留的数据
-    if( esClient.admin().indices().exists( new IndicesExistsRequest(eSConfig.index) )
-        .actionGet()
-        .isExists
-    ){
-      esClient.admin().indices().delete( new DeleteIndexRequest(eSConfig.index) )
+    if (esClient.admin().indices().exists(new IndicesExistsRequest(eSConfig.index))
+      .actionGet()
+      .isExists
+    ) {
+      esClient.admin().indices().delete(new DeleteIndexRequest(eSConfig.index))
     }
 
-    esClient.admin().indices().create( new CreateIndexRequest(eSConfig.index) )
+    esClient.admin().indices().create(new CreateIndexRequest(eSConfig.index))
 
     movieDF.write
       .option("es.nodes", eSConfig.httpHosts)
