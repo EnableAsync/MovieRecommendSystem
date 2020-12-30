@@ -87,7 +87,6 @@ public class MovieRestApi {
     @ResponseBody
     public Model getHotMovies(@RequestParam("num")int num, Model model) {
         List<Recommendation> recommendations = recommenderService.getHotRecommendations(new HotRecommendationRequest(num));
-        System.out.println("cnt of movies in service : " + recommendations.size());
         model.addAttribute("success",true);
         model.addAttribute("movies",movieService.getRecommendeMovies(recommendations));
         return model;
@@ -136,6 +135,7 @@ public class MovieRestApi {
     }
 
 
+
     /**
      * 获取单个电影的信息
      * @param id
@@ -175,6 +175,16 @@ public class MovieRestApi {
     @ResponseBody
     public Model getGenresMovies(@RequestParam("category")String category,@RequestParam("num")int num,Model model) {
         List<Recommendation> recommendations = recommenderService.getTopGenresRecommendations(new TopGenresRecommendationRequest(category,num));
+        model.addAttribute("success",true);
+        model.addAttribute("movies",movieService.getRecommendeMovies(recommendations));
+        return model;
+    }
+
+
+    @RequestMapping(value = "/topAll", produces = "application/json", method = RequestMethod.GET )
+    @ResponseBody
+    public Model getTopMovies(@RequestParam("num") int num,Model model){
+        List<Recommendation> recommendations = recommenderService.getTopAllMovies(new TopAllMoviesRequest(num));
         model.addAttribute("success",true);
         model.addAttribute("movies",movieService.getRecommendeMovies(recommendations));
         return model;
