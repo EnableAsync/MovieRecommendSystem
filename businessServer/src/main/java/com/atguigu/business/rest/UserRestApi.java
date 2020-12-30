@@ -15,6 +15,7 @@ import java.util.List;
 
 
 @RequestMapping("/rest/users")
+@CrossOrigin
 @Controller
 public class UserRestApi {
 
@@ -35,7 +36,7 @@ public class UserRestApi {
     public Model addUser(@RequestParam("username") String username,@RequestParam("password") String password,Model model) {
         if(userService.checkUserExist(username)){
             model.addAttribute("success",false);
-            model.addAttribute("message"," 用户名已经被注册！");
+            model.addAttribute("message","用户名已经被注册！");
             return model;
         }
         model.addAttribute("success",userService.registerUser(new RegisterUserRequest(username,password)));

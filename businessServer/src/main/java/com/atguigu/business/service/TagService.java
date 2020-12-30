@@ -79,11 +79,7 @@ public class TagService {
                 updateRequest.doc(XContentFactory.jsonBuilder().startObject().field("tags",value+"|"+tag.getTag()).endObject());
             }
             esClient.update(updateRequest).get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (InterruptedException | IOException | ExecutionException e) {
             e.printStackTrace();
         }
     }

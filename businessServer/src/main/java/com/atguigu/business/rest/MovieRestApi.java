@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.Random;
 
 
+@SuppressWarnings("ALL")
 @RequestMapping("/rest/movie")
+@CrossOrigin
 @Controller
 public class MovieRestApi {
-
-//    private Logger logger = LoggerFactory.getLogger(MovieRestApi.class);
 
     private static Logger logger = Logger.getLogger(MovieRestApi.class.getName());
 
@@ -87,6 +87,7 @@ public class MovieRestApi {
     @ResponseBody
     public Model getHotMovies(@RequestParam("num")int num, Model model) {
         List<Recommendation> recommendations = recommenderService.getHotRecommendations(new HotRecommendationRequest(num));
+        System.out.println("cnt of movies in service : " + recommendations.size());
         model.addAttribute("success",true);
         model.addAttribute("movies",movieService.getRecommendeMovies(recommendations));
         return model;
@@ -172,15 +173,15 @@ public class MovieRestApi {
      */
     @RequestMapping(value = "/genres", produces = "application/json", method = RequestMethod.GET )
     @ResponseBody
-    public Model getGenresMovies(@RequestParam("category")String category, Model model) {
-        List<Recommendation> recommendations = recommenderService.getContentBasedGenresRecommendations(new SearchRecommendationRequest(category,100));
+    public Model getGenresMovies(@RequestParam("category")String category,@RequestParam("num")int num,Model model) {
+        List<Recommendation> recommendations = recommenderService.getTopGenresRecommendations(new TopGenresRecommendationRequest(category,num));
         model.addAttribute("success",true);
         model.addAttribute("movies",movieService.getRecommendeMovies(recommendations));
         return model;
     }
 
     /**
-     * 获取用户评分过得电影
+     * 获取用户评分过的电影
      * @param username
      * @param model
      * @return

@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@SuppressWarnings("ALL")
 @Service
 public class RecommenderService {
 
@@ -35,23 +36,22 @@ public class RecommenderService {
     private TransportClient esClient;
 
     // 协同过滤推荐【电影相似性】
-    private List<Recommendation> findMovieCFRecs(int mid, int maxItems) {
+    private List<Recommendation> findMovieCFRecs( int mid, int maxItems ) {
         MongoCollection<Document> movieRecsCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_MOVIE_RECS_COLLECTION);
         Document movieRecs = movieRecsCollection.find(new Document("mid", mid)).first();
         return parseRecs(movieRecs, maxItems);
     }
 
     // 协同过滤推荐【用户电影矩阵】
-    private List<Recommendation> findUserCFRecs(int uid, int maxItems) {
+    private List<Recommendation> findUserCFRecs( int uid, int maxItems ) {
         MongoCollection<Document> movieRecsCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_USER_RECS_COLLECTION);
         Document userRecs = movieRecsCollection.find(new Document("uid", uid)).first();
         return parseRecs(userRecs, maxItems);
     }
 
 
-
     // 基于内容的推荐算法
-    private List<Recommendation> findContentBasedMoreLikeThisRecommendations(int mid, int maxItems) {
+    private List<Recommendation> findContentBasedMoreLikeThisRecommendations( int mid, int maxItems ) {
         MoreLikeThisQueryBuilder query = QueryBuilders.moreLikeThisQuery(/*new String[]{"name", "descri", "genres", "actors", "directors", "tags"},*/
                 new MoreLikeThisQueryBuilder.Item[]{new MoreLikeThisQueryBuilder.Item(Constant.ES_INDEX, Constant.ES_MOVIE_TYPE, String.valueOf(mid))});
 
@@ -59,13 +59,13 @@ public class RecommenderService {
     }
 
     // 实时推荐
-    private List<Recommendation> findStreamRecs(int uid,int maxItems){
+    private List<Recommendation> findStreamRecs( int uid, int maxItems ) {
         MongoCollection<Document> streamRecsCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_STREAM_RECS_COLLECTION);
         Document streamRecs = streamRecsCollection.find(new Document("uid", uid)).first();
         return parseRecs(streamRecs, maxItems);
     }
 
-    private List<Recommendation> parseRecs(Document document, int maxItems) {
+    private List<Recommendation> parseRecs( Document document, int maxItems ) {
         List<Recommendation> recommendations = new ArrayList<>();
         if (null == document || document.isEmpty())
             return recommendations;
@@ -75,7 +75,7 @@ public class RecommenderService {
         }
         Collections.sort(recommendations, new Comparator<Recommendation>() {
             @Override
-            public int compare(Recommendation o1, Recommendation o2) {
+            public int compare( Recommendation o1, Recommendation o2 ) {
                 return o1.getScore() > o2.getScore() ? -1 : 1;
             }
         });
@@ -83,12 +83,12 @@ public class RecommenderService {
     }
 
     // 全文检索
-    private List<Recommendation> findContentBasedSearchRecommendations(String text, int maxItems) {
+    private List<Recommendation> findContentBasedSearchRecommendations( String text, int maxItems ) {
         MultiMatchQueryBuilder query = QueryBuilders.multiMatchQuery(text, "name", "descri");
         return parseESResponse(esClient.prepareSearch().setIndices(Constant.ES_INDEX).setTypes(Constant.ES_MOVIE_TYPE).setQuery(query).setSize(maxItems).execute().actionGet());
     }
 
-    private List<Recommendation> parseESResponse(SearchResponse response) {
+    private List<Recommendation> parseESResponse( SearchResponse response ) {
         List<Recommendation> recommendations = new ArrayList<>();
         for (SearchHit hit : response.getHits()) {
             recommendations.add(new Recommendation((int) hit.getSourceAsMap().get("mid"), (double) hit.getScore()));
@@ -97,7 +97,7 @@ public class RecommenderService {
     }
 
     // 混合推荐算法
-    private List<Recommendation> findHybridRecommendations(int productId, int maxItems) {
+    private List<Recommendation> findHybridRecommendations( int productId, int maxItems ) {
         List<Recommendation> hybridRecommendations = new ArrayList<>();
 
         List<Recommendation> cfRecs = findMovieCFRecs(productId, maxItems);
@@ -110,14 +110,14 @@ public class RecommenderService {
             hybridRecommendations.add(new Recommendation(recommendation.getMid(), recommendation.getScore() * CB_RATING_FACTOR));
         }
 
-        List<Recommendation> streamRecs = findStreamRecs(productId,maxItems);
+        List<Recommendation> streamRecs = findStreamRecs(productId, maxItems);
         for (Recommendation recommendation : streamRecs) {
             hybridRecommendations.add(new Recommendation(recommendation.getMid(), recommendation.getScore() * SR_RATING_FACTOR));
         }
 
         Collections.sort(hybridRecommendations, new Comparator<Recommendation>() {
             @Override
-            public int compare(Recommendation o1, Recommendation o2) {
+            public int compare( Recommendation o1, Recommendation o2 ) {
                 return o1.getScore() > o2.getScore() ? -1 : 1;
             }
         });
@@ -125,41 +125,43 @@ public class RecommenderService {
     }
 
 
-    public List<Recommendation> getCollaborativeFilteringRecommendations(MovieRecommendationRequest request) {
+    public List<Recommendation> getCollaborativeFilteringRecommendations( MovieRecommendationRequest request ) {
         return findMovieCFRecs(request.getMid(), request.getSum());
     }
 
-    public List<Recommendation> getCollaborativeFilteringRecommendations(UserRecommendationRequest request) {
+    public List<Recommendation> getCollaborativeFilteringRecommendations( UserRecommendationRequest request ) {
 
         return findUserCFRecs(request.getUid(), request.getSum());
     }
 
-    public List<Recommendation> getContentBasedMoreLikeThisRecommendations(MovieRecommendationRequest request) {
+    public List<Recommendation> getContentBasedMoreLikeThisRecommendations( MovieRecommendationRequest request ) {
         return findContentBasedMoreLikeThisRecommendations(request.getMid(), request.getSum());
     }
 
-    public List<Recommendation> getContentBasedSearchRecommendations(SearchRecommendationRequest request) {
+    public List<Recommendation> getContentBasedSearchRecommendations( SearchRecommendationRequest request ) {
         return findContentBasedSearchRecommendations(request.getText(), request.getSum());
     }
 
-    public List<Recommendation> getHybridRecommendations(MovieHybridRecommendationRequest request) {
+    public List<Recommendation> getHybridRecommendations( MovieHybridRecommendationRequest request ) {
         return findHybridRecommendations(request.getMid(), request.getSum());
     }
 
 
-    public List<Recommendation> getHotRecommendations(HotRecommendationRequest request) {
+    public List<Recommendation> getHotRecommendations( HotRecommendationRequest request ) {
         // 获取热门电影的条目
         MongoCollection<Document> rateMoreMoviesRecentlyCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_RATE_MORE_MOVIES_RECENTLY_COLLECTION);
-        FindIterable<Document> documents = rateMoreMoviesRecentlyCollection.find().sort(Sorts.descending("yeahmonth")).limit(request.getSum());
+        FindIterable<Document> documents = rateMoreMoviesRecentlyCollection.find().sort(Sorts.descending("yearmonth")).limit(request.getSum());
 
         List<Recommendation> recommendations = new ArrayList<>();
         for (Document document : documents) {
+            Recommendation recomm = new Recommendation(document.getInteger("mid"), 0D);
             recommendations.add(new Recommendation(document.getInteger("mid"), 0D));
         }
+
         return recommendations;
     }
 
-    public List<Recommendation> getRateMoreRecommendations(RateMoreRecommendationRequest request) {
+    public List<Recommendation> getRateMoreRecommendations( RateMoreRecommendationRequest request ) {
 
         // 获取评分最多电影的条目
         MongoCollection<Document> rateMoreMoviesCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_RATE_MORE_MOVIES_COLLECTION);
@@ -172,15 +174,24 @@ public class RecommenderService {
         return recommendations;
     }
 
-    public List<Recommendation> getContentBasedGenresRecommendations(SearchRecommendationRequest request) {
+    public List<Recommendation> getContentBasedGenresRecommendations( SearchRecommendationRequest request ) {
         FuzzyQueryBuilder query = QueryBuilders.fuzzyQuery("genres", request.getText());
         return parseESResponse(esClient.prepareSearch().setIndices(Constant.ES_INDEX).setTypes(Constant.ES_MOVIE_TYPE).setQuery(query).setSize(request.getSum()).execute().actionGet());
     }
 
-    public List<Recommendation> getTopGenresRecommendations(TopGenresRecommendationRequest request){
-        Document genresTopMovies = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_GENRES_TOP_MOVIES_COLLECTION)
-                .find(Filters.eq("genres",request.getGenres())).first();
-        return parseRecs(genresTopMovies,request.getSum());
+    public List<Recommendation> getTopGenresRecommendations( TopGenresRecommendationRequest request ) {
+
+        MongoCollection<Document> genresTopMovies = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_GENRES_TOP_MOVIES_COLLECTION);
+        FindIterable<Document> documents = genresTopMovies.find(Filters.eq("genres", request.getGenres()));
+        List<Recommendation> recommendations = new ArrayList<>();
+        for (Document document : documents) {
+            List<Document> recs = (List<Document>) document.get("recs");
+            for(Document rec: recs){
+                recommendations.add(new Recommendation(rec.getInteger("mid"), 0D));
+            }
+        }
+
+        return recommendations;
     }
 
 }

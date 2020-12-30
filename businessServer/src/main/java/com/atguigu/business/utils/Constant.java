@@ -18,9 +18,9 @@ public class Constant {
 
     public static String MONGODB_MOVIE_RECS_COLLECTION = "MovieRecs";
 
-    public static String MONGODB_RATE_MORE_MOVIES_COLLECTION = "RateMoreMovies";
+    public static String MONGODB_RATE_MORE_MOVIES_COLLECTION = "PopularMovies";
 
-    public static String MONGODB_RATE_MORE_MOVIES_RECENTLY_COLLECTION = "RateMoreRecentlyMovies";
+    public static String MONGODB_RATE_MORE_MOVIES_RECENTLY_COLLECTION = "PopularRecentlyMovies";
 
     public static String MONGODB_STREAM_RECS_COLLECTION = "StreamRecs";
 
