@@ -73,14 +73,14 @@ public class MovieService {
             Movie m = documentToMovie(document);
             movies.add(m);
         }
-        movies.sort(new Comparator<Movie>() {
-            @Override
-            public int compare(Movie movie, Movie t1) {
-                if (movie.getScore() - t1.getScore() < 0) {
-                    return 1;
-                } else
-                    return -1;
-            }
+        movies.sort((movie, t1) -> {
+            double val = movie.getScore() - t1.getScore();
+            if (val < 0) {
+                return 1;
+            } else if (val == 0)
+                return 0;
+            else
+                return -1;
         });
         return movies;
     }

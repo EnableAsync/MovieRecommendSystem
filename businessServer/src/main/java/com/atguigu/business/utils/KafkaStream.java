@@ -26,10 +26,10 @@ public class KafkaStream {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
 
-        producer = new KafkaProducer<String, String>(props);
+        producer = new KafkaProducer<>(props);
     }
 
     public void sendMessage(String msg) {
-        producer.send(new ProducerRecord<String, String>("recommender", "test", msg));
+        producer.send(new ProducerRecord<>("recommender", "test", msg));
     }
 }
