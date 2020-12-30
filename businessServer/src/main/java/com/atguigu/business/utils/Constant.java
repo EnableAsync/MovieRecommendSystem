@@ -28,6 +28,8 @@ public class Constant {
 
     public static String MONGODB_GENRES_TOP_MOVIES_COLLECTION = "GenresTopMovies";
 
+    public static String MONGODB_CONTENT_MOVIE_RECS = "ContentMovieRecs";
+
     //************** FOR ELEASTICSEARCH ****************
 
     public static String ES_INDEX = "recommender";

@@ -30,40 +30,40 @@ public class UserService {
 
     private MongoCollection<Document> userCollection;
 
-    private MongoCollection<Document> getUserCollection(){
-        if(null == userCollection)
+    private MongoCollection<Document> getUserCollection() {
+        if (null == userCollection)
             userCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_USER_COLLECTION);
         return userCollection;
     }
 
-    public boolean registerUser(RegisterUserRequest request){
+    public boolean registerUser(RegisterUserRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(request.getPassword());
         user.setFirst(true);
         user.setTimestamp(System.currentTimeMillis());
-        try{
+        try {
             getUserCollection().insertOne(Document.parse(objectMapper.writeValueAsString(user)));
             return true;
-        }catch (JsonProcessingException e){
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    public User loginUser(LoginUserRequest request){
+    public User loginUser(LoginUserRequest request) {
         User user = findByUsername(request.getUsername());
-        if(null == user) {
+        if (null == user) {
             return null;
-        }else if(!user.passwordMatch(request.getPassword())){
+        } else if (!user.passwordMatch(request.getPassword())) {
             return null;
         }
         return user;
     }
 
-    private User documentToUser(Document document){
-        try{
-            return objectMapper.readValue(JSON.serialize(document),User.class);
+    private User documentToUser(Document document) {
+        try {
+            return objectMapper.readValue(JSON.serialize(document), User.class);
         } catch (JsonParseException e) {
             e.printStackTrace();
             return null;
@@ -76,32 +76,39 @@ public class UserService {
         }
     }
 
-    public boolean checkUserExist(String username){
+    public boolean checkUserExist(String username) {
         return null != findByUsername(username);
     }
 
-    public User findByUsername(String username){
-        Document user = getUserCollection().find(new Document("username",username)).first();
-        if(null == user || user.isEmpty())
+    public User findByUsername(String username) {
+        Document user = getUserCollection().find(new Document("username", username)).first();
+        if (null == user || user.isEmpty())
             return null;
         return documentToUser(user);
     }
 
-    public boolean updateUser(User user){
-        getUserCollection().updateOne(Filters.eq("uid", user.getUid()), new Document().append("$set",new Document("first", user.isFirst())));
-        getUserCollection().updateOne(Filters.eq("uid", user.getUid()), new Document().append("$set",new Document("prefGenres", user.getPrefGenres())));
+    public boolean updateUser(User user) {
+        getUserCollection().updateOne(Filters.eq("uid", user.getUid()), new Document().append("$set", new Document("first", user.isFirst())));
+        getUserCollection().updateOne(Filters.eq("uid", user.getUid()), new Document().append("$set", new Document("prefGenres", user.getPrefGenres())));
         return true;
     }
 
-    public User findByUID(int uid){
-        Document user = getUserCollection().find(new Document("uid",uid)).first();
-        if(null == user || user.isEmpty())
+    public User findByUID(int uid) {
+        Document user = getUserCollection().find(new Document("uid", uid)).first();
+        if (null == user || user.isEmpty())
             return null;
         return documentToUser(user);
     }
 
-    public void removeUser(String username){
-        getUserCollection().deleteOne(new Document("username",username));
+    public void removeUser(String username) {
+        getUserCollection().deleteOne(new Document("username", username));
     }
 
+    public boolean checkNew(String username) {
+        User user = findByUsername(username);
+        if (null == user) {
+            return true;
+        }
+        return user.getPrefGenres().size() == 0;
+    }
 }

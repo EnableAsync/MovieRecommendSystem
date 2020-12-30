@@ -53,4 +53,11 @@ public class UserRestApi {
         model.addAttribute("success",userService.updateUser(user));
         return model;
     }
+
+    @RequestMapping(value = "/info", produces = "application/json", method = RequestMethod.GET)
+    @ResponseBody
+    public Model getInfo(@RequestParam("username") String username, Model model) {
+        model.addAttribute("new", userService.checkNew(username));
+        return model;
+    }
 }

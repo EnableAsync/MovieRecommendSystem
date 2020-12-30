@@ -36,6 +36,8 @@ public class MovieRestApi {
     private RatingService ratingService;
     @Autowired
     private TagService tagService;
+    @Autowired
+    private KafkaService kafkaService;
 
     /**
      * 获取推荐的电影【实时推荐6 + 内容推荐4】
@@ -214,6 +216,7 @@ public class MovieRestApi {
         boolean complete = ratingService.movieRating(request);
         //埋点日志
         if(complete) {
+            kafkaService.sendMessage(user.getUid() +"|"+ id +"|"+ request.getScore() +"|"+ System.currentTimeMillis()/1000);
             System.out.print("=========complete=========");
             logger.info(Constant.MOVIE_RATING_PREFIX + ":" + user.getUid() +"|"+ id +"|"+ request.getScore() +"|"+ System.currentTimeMillis()/1000);
         }

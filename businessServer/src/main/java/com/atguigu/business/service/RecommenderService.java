@@ -9,6 +9,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Sorts;
+import org.apache.kafka.common.config.ConfigDef;
 import org.bson.Document;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -48,6 +49,12 @@ public class RecommenderService {
         MongoCollection<Document> movieRecsCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_USER_RECS_COLLECTION);
         Document userRecs = movieRecsCollection.find(new Document("uid", uid)).first();
         return parseRecs(userRecs, maxItems);
+    }
+
+    private List<Recommendation> findContentByMongoDb(int mid, int maxItems) {
+        MongoCollection<Document> contentCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_CONTENT_MOVIE_RECS);
+        Document contentRecs = contentCollection.find(new Document("mid", mid)).first();
+        return parseRecs(contentRecs, maxItems);
     }
 
 
@@ -106,7 +113,9 @@ public class RecommenderService {
             hybridRecommendations.add(new Recommendation(recommendation.getMid(), recommendation.getScore() * CF_RATING_FACTOR));
         }
 
-        List<Recommendation> cbRecs = findContentBasedMoreLikeThisRecommendations(productId, maxItems);
+//        List<Recommendation> cbRecs = findContentBasedMoreLikeThisRecommendations(productId, maxItems);
+        List<Recommendation> cbRecs = findContentByMongoDb(productId, maxItems);
+        System.out.println(cbRecs);
         for (Recommendation recommendation : cbRecs) {
             hybridRecommendations.add(new Recommendation(recommendation.getMid(), recommendation.getScore() * CB_RATING_FACTOR));
         }
@@ -136,7 +145,8 @@ public class RecommenderService {
     }
 
     public List<Recommendation> getContentBasedMoreLikeThisRecommendations( MovieRecommendationRequest request ) {
-        return findContentBasedMoreLikeThisRecommendations(request.getMid(), request.getSum());
+//        return findContentBasedMoreLikeThisRecommendations(request.getMid(), request.getSum());
+        return findContentByMongoDb(request.getMid(), request.getSum());
     }
 
     public List<Recommendation> getContentBasedSearchRecommendations( SearchRecommendationRequest request ) {
