@@ -1,5 +1,6 @@
 package com.atguigu.business.service;
 
+import com.atguigu.business.model.domain.User;
 import com.atguigu.business.model.recom.Recommendation;
 import com.atguigu.business.model.request.*;
 import com.atguigu.business.utils.Constant;
@@ -186,12 +187,22 @@ public class RecommenderService {
         List<Recommendation> recommendations = new ArrayList<>();
         for (Document document : documents) {
             List<Document> recs = (List<Document>) document.get("recs");
-            for(Document rec: recs){
-                recommendations.add(new Recommendation(rec.getInteger("mid"), 0D));
+            for (Document rec : recs) {
+                recommendations.add(new Recommendation(rec.getInteger("mid"), rec.getDouble("score")));
             }
         }
 
         return recommendations;
     }
 
+    public List<Recommendation> getTopAllMovies( TopAllMoviesRequest request ) {
+        MongoCollection<Document> genresTopMovies = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_AVERAGE_MOVIES_SCORE_COLLECTION);
+        FindIterable<Document> documents = genresTopMovies.find().sort(Sorts.descending("avg")).limit(request.getNum());
+        System.out.println(request.getNum());
+        List<Recommendation> recommendations = new ArrayList<>();
+        for (Document document : documents) {
+            recommendations.add(new Recommendation(document.getInteger("mid"), 0D));
+        }
+        return recommendations;
+    }
 }
