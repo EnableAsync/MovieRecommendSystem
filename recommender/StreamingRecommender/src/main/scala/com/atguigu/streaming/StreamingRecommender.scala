@@ -97,6 +97,7 @@ object StreamingRecommender {
     // 把原始数据UID|MID|SCORE|TIMESTAMP 转换成评分流
     val ratingStream = kafkaStream.map{
       msg =>
+        println(msg)
         val attr = msg.value().split("\\|")
         ( attr(0).toInt, attr(1).toInt, attr(2).toDouble, attr(3).toInt )
     }
