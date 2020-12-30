@@ -81,6 +81,16 @@
         </dependency>
         <!-- fasterxml end -->
 
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-streams</artifactId>
+            <version>0.10.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>0.10.2.1</version>
+        </dependency>
     </dependencies>
 
     <build>
