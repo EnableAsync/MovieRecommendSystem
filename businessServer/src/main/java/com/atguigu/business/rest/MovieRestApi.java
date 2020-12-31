@@ -8,12 +8,14 @@ import com.atguigu.business.model.domain.User;
 import com.atguigu.business.utils.Constant;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.apache.log4j.Logger;
 
+import javax.management.modelmbean.ModelMBean;
 import java.util.List;
 import java.util.Random;
 
@@ -57,6 +59,15 @@ public class MovieRestApi {
         }
         model.addAttribute("success",true);
         model.addAttribute("movies",movieService.getHybirdRecommendeMovies(recommendations));
+        return model;
+    }
+
+    @RequestMapping(value = "/stream", produces = "application/json", method = RequestMethod.GET)
+    @ResponseBody
+    public Model getStreamMovies(@RequestParam("username")String username,@RequestParam("num")int num,Model model) {
+        User user = userService.findByUsername(username);
+        List<Recommendation> recommendations = recommenderService.findStreamRecs(user.getUid(), num);
+        model.addAttribute("movies", movieService.getHybirdRecommendeMovies(recommendations));
         return model;
     }
 

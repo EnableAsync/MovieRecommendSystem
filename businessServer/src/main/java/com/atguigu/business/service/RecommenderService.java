@@ -67,11 +67,13 @@ public class RecommenderService {
     }
 
     // 实时推荐
-    private List<Recommendation> findStreamRecs( int uid, int maxItems ) {
+    public List<Recommendation> findStreamRecs( int uid, int maxItems ) {
         MongoCollection<Document> streamRecsCollection = mongoClient.getDatabase(Constant.MONGODB_DATABASE).getCollection(Constant.MONGODB_STREAM_RECS_COLLECTION);
         Document streamRecs = streamRecsCollection.find(new Document("uid", uid)).first();
         return parseRecs(streamRecs, maxItems);
     }
+
+
 
     private List<Recommendation> parseRecs( Document document, int maxItems ) {
         List<Recommendation> recommendations = new ArrayList<>();
