@@ -4,7 +4,7 @@
 # 使用说明
 ## 注册
 ![注册](docs/register.png)
-
+db
 ## 登录
 ![](docs/login.png)
 
@@ -22,6 +22,9 @@
 
 ## 离线推荐
 ![离线推荐](docs/offline.png)
+
+## 搜索
+![搜索](docs/search.png)
 
 ## 后端
 - Spring
